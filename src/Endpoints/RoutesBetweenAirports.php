@@ -11,7 +11,6 @@ class RoutesBetweenAirports
 
     public function __construct($data)
     {
-        $data               = json_decode($data, true);
         $this->routes       = $data['RoutesBetweenAirportsResult']['data'];
         $this->next_offset  = $data['RoutesBetweenAirportsResult']['next_offset'];
     }

@@ -10,7 +10,6 @@ class BlockIdentCheck
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->blocked = $data['BlockIdentCheckResult'];
     }
 

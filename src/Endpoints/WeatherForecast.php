@@ -13,7 +13,6 @@ class WeatherForecast
 
     public function __construct($data)
     {
-        $data                   = json_decode($data, true);
         $this->airport_code     = $data['WeatherForecastResult']['airport_code'];;
         $this->timestring       = $data['WeatherForecastResult']['timestring'];;
         $this->raw_forecast     = $data['WeatherForecastResult']['raw_forecast'];;

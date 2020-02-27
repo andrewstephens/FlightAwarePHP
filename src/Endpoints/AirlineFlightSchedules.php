@@ -11,7 +11,6 @@ class AirlineFlightSchedules
 
     public function __construct($data)
     {
-        $data                   = json_decode($data, true);
         $this->flights          = $data['AirlineFlightSchedulesResult']['flights'];
         $this->next_offset      = $data['AirlineFlightSchedulesResult']['next_offset'];
     }

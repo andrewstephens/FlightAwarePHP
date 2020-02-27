@@ -11,7 +11,6 @@ class WeatherConditions
 
     public function __construct($data)
     {
-        $data               = json_decode($data, true);
         $this->conditions   = $data['WeatherConditionsResult']['conditions'];
         $this->next_offset  = $data['WeatherConditionsResult']['next_offset'];
     }

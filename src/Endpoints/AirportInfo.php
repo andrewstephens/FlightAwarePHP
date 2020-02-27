@@ -19,7 +19,6 @@ class AirportInfo
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->airport_code         = $data['AirportInfoResult']['airport_code'];
         $this->name                 = $data['AirportInfoResult']['name'];
         $this->elevation            = $data['AirportInfoResult']['elevation'];

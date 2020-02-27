@@ -11,7 +11,6 @@ class FlightInfoStatus
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->flights = $data['FlightInfoStatusResult']['flights'];
         $this->next_offset = $data['FlightInfoStatusResult']['next_offset'];
     }

@@ -10,7 +10,6 @@ class LatLongsToDistance
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->distance_in_miles = $data['LatLongsToDistanceResult'];
     }
 

@@ -15,7 +15,6 @@ class FlightCancellationStatistics
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->total_cancellations_worldwide    = $data['FlightCancellationStatisticsResult']['total_cancellations_worldwide'];
         $this->total_cancellations_national     = $data['FlightCancellationStatisticsResult']['total_cancellations_national'];
         $this->total_delays_worldwide           = $data['FlightCancellationStatisticsResult']['total_delays_worldwide'];

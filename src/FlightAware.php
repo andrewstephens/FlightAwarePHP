@@ -25,6 +25,7 @@ use FlightAware\Endpoints\TailOwner;
 use FlightAware\Endpoints\WeatherConditions;
 use FlightAware\Endpoints\WeatherForecast;
 use FlightAware\Endpoints\ZipcodeInfo;
+use FlightAware\Exceptions\FlightAwareException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -34,25 +35,61 @@ class FlightAware
 {
     const BASE_URL = 'http://flightxml.flightaware.com/json/FlightXML3/';
 
+    /**
+     * FlightAware constructor.
+     * @param string $username
+     *  FlightAware Username
+     *
+     * @param string $api_key
+     *  FlightAware API Key
+     *
+     * @return void
+     */
     public function __construct(string $username, string $api_key)
     {
         $this->options = [
             'base_uri' => self::BASE_URL,
-            'auth' => [$username, $api_key]
+            'auth' => [$username, $api_key],
+            'headers' => [
+                'User-Agent' => sprintf(
+                    "%s/%s",
+                    FlightAwareConstants::API_WRAPPER_NAME,
+                    FlightAwareConstants::API_WRAPPER_VERSION
+                )
+            ]
         ];
     }
 
-    // TODO: Improve handling of 400 errors and exceptions
+    /**
+     * Request the data from a specific endpoint.
+     *
+     * @param $class_name
+     *  The name of the Endpoint / Endpoint Data Model
+     *
+     * @param array $params
+     *  Optional parameters to pass to the request query.
+     *
+     * @return mixed
+     */
     public function request($class_name, $params = [])
     {
         $client = new Client($this->options);
+
         try {
             $response = $client->request('GET', $class_name::API_ENDPOINT, ['query' => $params]);
-            return new $class_name($response->getBody());
+            $data = json_decode($response->getBody(), true);
+
+            if (isset($data['error']) && !empty($data['error'])) {
+                throw new FlightAwareException($class_name::API_ENDPOINT, $data['error']);
+            }
+
+            return new $class_name($data);
         } catch (RequestException $e) {
-            // TODO: Improve This
-            echo $e->getMessage();
-            exit;
+            return sprintf(
+                "Error occurred while requesting endpoint %s. Error: %s",
+                $class_name::API_ENDPOINT,
+                $e->getRequest()->getBody()
+            );
         }
     }
 
@@ -60,6 +97,8 @@ class FlightAware
      * Returns flight schedules that have been published by airlines. These schedules are available for the recent
      * past as well as up to one year into the future. Flights performed by airline codeshares are also returned
      * by default in these results but can be excluded. If available the FlightAware flight id will be returned.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_AirlineFlightSchedules
      *
      * @param int $start_date
      *  Timestamp of earliest flight departure to return, specified in integer seconds since 1970 (UNIX epoch time).
@@ -96,10 +135,10 @@ class FlightAware
     public function airline_flight_schedules(
         int $start_date,
         int $end_date,
-        string $origin = '',
-        string $destination = '',
-        string $airline = '',
-        string $flightno = '',
+        string $origin = null,
+        string $destination = null,
+        string $airline = null,
+        string $flightno = null,
         bool $exclude_codeshare = false,
         int $how_many = 15,
         int $offset = 0
@@ -122,6 +161,8 @@ class FlightAware
     /**
      * Returns information about specified Aircraft Type.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_AircraftType
+     *
      * @param string $type
      *  Aircraft Type ID
      *
@@ -136,6 +177,8 @@ class FlightAware
     /**
      * Returns information about specified airline.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_AirlineInfo
+     *
      * @param string $airline_code
      *  The ICAO airline ID (e.g., COA, ASA, UAL, etc.)
      *
@@ -149,6 +192,9 @@ class FlightAware
 
     /**
      * Returns Flights Scheduled, Departing, Enroute, and Arriving at specified airport.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_AirportBoards
+     *
      * @param string $airport_code
      *  Airport Code
      *
@@ -174,7 +220,7 @@ class FlightAware
     public function airport_boards(
         string $airport_code,
         bool $include_ex_data = false,
-        string $filter = '',
+        string $filter = null,
         string $type = 'all',
         int $how_many = 15,
         int $offset = 0
@@ -193,6 +239,8 @@ class FlightAware
     /**
      * Return information about specified airport.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_AirportInfo
+     *
      * @param string $airport_code
      *  ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
      *
@@ -206,6 +254,8 @@ class FlightAware
 
     /**
      * Given an aircraft identification, returns true if the aircraft is blocked from public tracking, false if it is not.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_BlockIdentCheck
      *
      * @param string $ident
      *  Requested Tail Number
@@ -222,6 +272,8 @@ class FlightAware
      * Given an airport, CountAirportOperations returns the number of aircraft scheduled, en route or departing the airport.
      * Scheduled arrivals are non-airborne flights that are scheduled to fly to the airport in question.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_CountAirportOperations
+     *
      * @param string $airport_code
      *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
      *
@@ -236,6 +288,8 @@ class FlightAware
     /**
      * Returns an array of airlines and how many flights each currently has enroute.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_CountAllEnrouteAirlineOperations
+     *
      * @return CountAllEnrouteAirlineOperations
      */
     public function count_all_enroute_airline_operations(): CountAllEnrouteAirlineOperations
@@ -246,6 +300,8 @@ class FlightAware
     /**
      * Given a flight identifier (faFlightID) of a past, current, or future flight, DecodeFlightRoute returns a
      * "cracked" list of noteworthy navigation points along the planned flight route.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_DecodeFlightRoute
      *
      * @param string $faFlightID
      *  Unique identifier assigned by FlightAware for the desired flight (or use "ident@departureTime").
@@ -262,6 +318,8 @@ class FlightAware
     /**
      * Given an origin airport, destination airport, and a route between them, DecodeRoute returns a "cracked" list
      * of noteworthy navigation points along the planned flight route.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_DecodeRoute
      *
      * @param string $origin
      *  Origin airport code
@@ -285,6 +343,8 @@ class FlightAware
     /**
      * Returns matching flights based on an origin/destination pair. The returned results may include
      * non-stop or one-stop flights.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_FindFlight
      *
      * @param string $origin
      *  Airport of Origin
@@ -336,6 +396,8 @@ class FlightAware
     /**
      * Returns the flights scheduled, departing, enroute, for a specified airline.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_FleetBoards
+     *
      * @param string $fleet_code
      *  ICAO airline code.
      *
@@ -376,6 +438,8 @@ class FlightAware
      * Fetches statistics about how many flights have been cancelled on the specified day, and aggregated by the
      * specified breakdown criteria.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_FlightCancellationStatistics
+     *
      * @param string $time_period
      *  Specifies which day to analyze. (must be 'yesterday', 'today', 'tomorrow', 'plus2days', 'twoDaysAgo',
      *  'minus2plus12hrs', 'next36hrs', 'week').
@@ -399,7 +463,7 @@ class FlightAware
     public function flight_cancellation_statistics(
         string $time_period,
         string $type_matching,
-        string $ident_filter = '',
+        string $ident_filter = null,
         int $how_many = 15,
         int $offset = 0
     ): FlightCancellationStatistics {
@@ -428,6 +492,8 @@ class FlightAware
      *
      * The inbound_faFlightID field will only be included for queries that use a howMany of 15 or less.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_FlightInfoStatus
+     *
      * @param string $ident
      *  Requested tail number, ident, atc_ident, or faFlightID
      *
@@ -450,7 +516,7 @@ class FlightAware
     public function flight_info_status(
         string $ident,
         bool $include_ex_data = false,
-        string $filter = '',
+        string $filter = null,
         int $how_many = 15,
         int $offset = 0
     ): FlightInfoStatus {
@@ -480,6 +546,8 @@ class FlightAware
      *
      * Codeshares and alternate idents are automatically searched.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_GetFlightTrack
+     *
      * @param string $ident
      *  Requested flight id (either a FlightAware flight id (e.g. SWA35-1491974780-airline-0046) or an ident
      *  with departure time (e.g. SWA35@1492200000))
@@ -498,6 +566,8 @@ class FlightAware
     /**
      * Given two latitudes and longitudes, lat1 lon1 lat2 and lon2, respectively, determine the great circle distance
      * between those positions in miles. The returned distance is rounded to the nearest whole mile.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_LatLongsToDistance
      *
      * @param float $lat1
      *  Latitude of Point 1
@@ -525,6 +595,8 @@ class FlightAware
      * distances but since it assumes the earth is a sphere rather than on irregular oblate sphereoid may be inaccurate
      * for flights around a good chunk of the world, etc.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_LatLongsToHeading
+     *
      * @param float $lat1
      *  Latitude of Point 1
      *
@@ -548,6 +620,8 @@ class FlightAware
     /**
      * Returns a list of airports near the latitude / longitude or airport code specified within the given radius.
      * You must specify either a latitude/longitude OR an airport code.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_NearbyAirports
      *
      * @param int $radius
      *  The search radius to use for finding nearby airports in statute miles.
@@ -600,6 +674,8 @@ class FlightAware
      * 100 ft intervals), and the most recent filed departure date/time are returned. The max_file_age will only
      * accept certain values so ensure that you conform to those requirements.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_RoutesBetweenAirports
+     *
      * @param string $origin
      *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
      *
@@ -650,6 +726,8 @@ class FlightAware
      * owner's name, location (typically city and state), and website, if any. Codeshares and alternate idents are
      * automatically searched.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_TailOwner
+     *
      * @param string $ident
      *  Requested tail number.
      *
@@ -666,6 +744,8 @@ class FlightAware
      * weather for a nearby airport if the requested one is not available, then set the return_nearby_weather argument
      * to true. If a value greater than 1 is specified for howMany then multiple past reports will be returned, in
      * order of increasing age.
+     *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_WeatherConditions
      *
      * @param string $airport_code
      *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
@@ -716,6 +796,8 @@ class FlightAware
      * is omitted or set to 0 then the latest forecast is returned. To retrieve the active forecast for a specific
      * time, pass in weather_date with the request.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_WeatherForecast
+     *
      * @param string $airport_code
      *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
      *
@@ -746,6 +828,8 @@ class FlightAware
     /**
      * Returns information about a five-digit zipcode. Of particular importance is latitude and longitude.
      *
+     * @see https://flightaware.com/commercial/flightxml/v3/apiref.rvt#op_ZipcodeInfo
+     *
      * @param string $zipcode
      *  A five-digit U.S. Postal Service zipcode.
      *
@@ -757,7 +841,3 @@ class FlightAware
         return $this->request(ZipcodeInfo::class, $params);
     }
 }
-
-$client = new FlightAware($username, $api_key);
-$data = $client->zipcode_info(35213);
-print_r($data->raw());

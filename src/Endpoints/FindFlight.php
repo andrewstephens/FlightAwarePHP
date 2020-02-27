@@ -12,7 +12,6 @@ class FindFlight
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $flight_data = $data['FindFlightResult'];
         $this->number_of_flights = $flight_data['num_flights'];
         $this->next_offset = $flight_data['next_offset'];

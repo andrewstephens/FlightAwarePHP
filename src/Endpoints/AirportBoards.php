@@ -15,7 +15,6 @@ class AirportBoards
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->airport          = $data['AirportBoardsResult']['airport'];
         $this->airport_info     = $data['AirportBoardsResult']['airport_info'];
         $this->arrivals         = $data['AirportBoardsResult']['arrivals'];

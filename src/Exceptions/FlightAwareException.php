@@ -2,13 +2,20 @@
 
 namespace FlightAware\Exceptions;
 
-use Throwable;
-
-class RequestException extends \Exception
+class FlightAwareException extends \Exception
 {
-    public static function create(string $endpoint, string $response): RequestException
+    protected $error;
+    protected $endpoint;
+
+    public function __construct($endpoint, $message)
     {
-        $message = '';
-        return new static($message);
+        $this->endpoint = $endpoint;
+        $this->error = $message;
+        parent::__construct();
+    }
+
+    public function __toString()
+    {
+       return sprintf("Error with endpoint: %s. Message: %s", $this->endpoint, $this->error);
     }
 }

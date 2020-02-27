@@ -13,7 +13,6 @@ class TailOwner
 
     public function __construct($data)
     {
-        $data                   = json_decode($data, true);
         $this->location         = $data['TailOwnerResult']['location'];
         $this->location2        = $data['TailOwnerResult']['location2'];
         $this->owner            = $data['TailOwnerResult']['owner'];

@@ -14,7 +14,6 @@ class FleetBoards
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->fleet        = $data['FleetBoardsResult']['fleet'];
         $this->arrivals     = $data['FleetBoardsResult']['arrivals'];
         $this->departures   = $data['FleetBoardsResult']['departures'];

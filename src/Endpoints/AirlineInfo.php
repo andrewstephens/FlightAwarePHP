@@ -19,7 +19,6 @@ class AirlineInfo
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->name                     = $data['AirlineInfoResult']['name'];
         $this->shortname                = $data['AirlineInfoResult']['shortname'];
         $this->callsign                 = $data['AirlineInfoResult']['callsign'];

@@ -10,7 +10,6 @@ class CountAllEnrouteAirlineOperations
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $airline_list = $data['CountAllEnrouteAirlineOperationsResult']['data'];
         $airline_operations = [];
         foreach ($airline_list as $airline) {

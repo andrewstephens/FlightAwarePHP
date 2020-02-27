@@ -14,7 +14,6 @@ class AircraftType
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->description  = $data['AircraftTypeResult']['description'];
         $this->type         = $data['AircraftTypeResult']['type'];
         $this->engine_count = $data['AircraftTypeResult']['engine_count'];

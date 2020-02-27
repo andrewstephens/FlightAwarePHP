@@ -13,7 +13,6 @@ class CountAirportOperations
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->departed                  = $data['CountAirportOperationsResult']['departed'];
         $this->enroute                   = $data['CountAirportOperationsResult']['enroute'];
         $this->scheduled_departures      = $data['CountAirportOperationsResult']['scheduled_departures'];

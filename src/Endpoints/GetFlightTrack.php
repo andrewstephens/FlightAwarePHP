@@ -10,7 +10,6 @@ class GetFlightTrack
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
         $this->tracks = $data['GetFlightTrackResult']['tracks'];
     }
 

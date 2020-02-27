@@ -14,7 +14,6 @@ class ZipcodeInfo
 
     public function __construct($data)
     {
-        $data               = json_decode($data, true);
         $this->city         = $data['ZipcodeInfoResult']['city'];
         $this->county       = $data['ZipcodeInfoResult']['county'];
         $this->latitude     = $data['ZipcodeInfoResult']['latitude'];
