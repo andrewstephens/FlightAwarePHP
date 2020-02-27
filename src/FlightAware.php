@@ -20,6 +20,11 @@ use FlightAware\Endpoints\GetFlightTrack;
 use FlightAware\Endpoints\LatLongsToDistance;
 use FlightAware\Endpoints\LatLongsToHeading;
 use FlightAware\Endpoints\NearbyAirports;
+use FlightAware\Endpoints\RoutesBetweenAirports;
+use FlightAware\Endpoints\TailOwner;
+use FlightAware\Endpoints\WeatherConditions;
+use FlightAware\Endpoints\WeatherForecast;
+use FlightAware\Endpoints\ZipcodeInfo;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -37,7 +42,7 @@ class FlightAware
         ];
     }
 
-    // TODO: Improve handline 400 errors and exceptions
+    // TODO: Improve handling of 400 errors and exceptions
     public function request($class_name, $params = [])
     {
         $client = new Client($this->options);
@@ -49,6 +54,69 @@ class FlightAware
             echo $e->getMessage();
             exit;
         }
+    }
+
+    /**
+     * Returns flight schedules that have been published by airlines. These schedules are available for the recent
+     * past as well as up to one year into the future. Flights performed by airline codeshares are also returned
+     * by default in these results but can be excluded. If available the FlightAware flight id will be returned.
+     *
+     * @param int $start_date
+     *  Timestamp of earliest flight departure to return, specified in integer seconds since 1970 (UNIX epoch time).
+     *  Use UTC/GMT to convert the local time at the departure airport to this timestamp.
+     *
+     * @param int $end_date
+     *  Timestamp of latest flight departure to return, specified in integer seconds since 1970 (UNIX epoch time).
+     *  Use UTC/GMT to convert the local time at the departure airport to this timestamp.
+     *
+     * @param string $origin
+     *  Airport code of origin. If blank or unspecified, then flights with any origin will be returned.
+     *
+     * @param string $destination
+     *  Airport code of destination. If blank or unspecified, then flights with any destination will be returned.
+     *
+     * @param string $airline
+     *  Airline code of the carrier. If blank or unspecified, then flights on any airline will be returned.
+     *
+     * @param string $flightno
+     *  Flight number. If blank or unspecified, then any flight number will be returned.
+     *
+     * @param bool $exclude_codeshare
+     *  Flag to include codeshare flights.
+     *
+     * @param int $how_many
+     *  Maximum number of past records to obtain. Must be a positive integer value.
+     *
+     * @param int $offset
+     *  Must be an integer value of the offset row count you want the search to start at. Most requests should
+     *  be 0 (most recent report).
+     *
+     * @return AirlineFlightSchedules
+     */
+    public function airline_flight_schedules(
+        int $start_date,
+        int $end_date,
+        string $origin = '',
+        string $destination = '',
+        string $airline = '',
+        string $flightno = '',
+        bool $exclude_codeshare = false,
+        int $how_many = 15,
+        int $offset = 0
+    ): AirlineFlightSchedules {
+        $params = [
+            'start_date'            => $start_date,
+            'end_date'              => $end_date,
+            'origin'                => $origin,
+            'destination'           => $destination,
+            'airline'               => $airline,
+            'flightno'              => $flightno,
+            'exclude_codeshare'     => $exclude_codeshare,
+            'howMany'               => $how_many,
+            'offset'                => $offset
+        ];
+
+        return $this->request(AirlineFlightSchedules::class, $params);
     }
 
     /**
@@ -112,12 +180,12 @@ class FlightAware
         int $offset = 0
     ) {
         $params = [
-            'airport_code' => $airport_code,
-            'include_ex_data' => $include_ex_data,
-            'filter' => $filter,
-            'type' => $type,
-            'howMany' => $how_many,
-            'offset' => $offset
+            'airport_code'      => $airport_code,
+            'include_ex_data'   => $include_ex_data,
+            'filter'            => $filter,
+            'type'              => $type,
+            'howMany'           => $how_many,
+            'offset'            => $offset
         ];
         return $this->request(AirportBoards::class, $params);
     }
@@ -253,13 +321,13 @@ class FlightAware
         int $offset = 0
     ): FindFlight {
         $params = [
-            'origin' => $origin,
-            'destination' => $destination,
-            'include_ex_data' => $include_ex_data,
-            'type' => $type,
-            'filter' => $filter,
-            'howMany' => $how_many,
-            'offset' => $offset
+            'origin'            => $origin,
+            'destination'       => $destination,
+            'include_ex_data'   => $include_ex_data,
+            'type'              => $type,
+            'filter'            => $filter,
+            'howMany'           => $how_many,
+            'offset'            => $offset
         ];
 
         return $this->request(FindFlight::class, $params);
@@ -514,56 +582,182 @@ class FlightAware
         int $offset = 0
     ): NearbyAirports {
         $params = [
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'airport_code' => $airport_code,
-            'radius' => $radius,
-            'only_iap' => $only_iap,
-            'howMany' => $how_many,
-            'offset' => $offset
+            'latitude'      => $latitude,
+            'longitude'     => $longitude,
+            'airport_code'  => $airport_code,
+            'radius'        => $radius,
+            'only_iap'      => $only_iap,
+            'howMany'       => $how_many,
+            'offset'        => $offset
         ];
 
         return $this->request(NearbyAirports::class, $params);
     }
 
+    /**
+     * Returns information about assigned IFR routings between two airports. For each known routing, the route, number
+     * of times that route has been assigned, the filed altitude (lowest and highest among found plans, measured in
+     * 100 ft intervals), and the most recent filed departure date/time are returned. The max_file_age will only
+     * accept certain values so ensure that you conform to those requirements.
+     *
+     * @param string $origin
+     *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
+     *
+     * @param string $destination
+     *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
+     *
+     * @param string $max_file_age
+     *  Maximum filed plan age of flights to consider. Can be a value less than or equal to 14 days (2 weeks) OR
+     *  1 month OR 1 year (for example: "6 days" or "1 month" or "1 year"). This should generally be longer than
+     *  maxDepartureAge.
+     *
+     * @param string $sort_by
+     *  Sort column for results. Valid options are "count" (default) or "last_departuretime". The "count" option
+     *  will sort results by the route filing count in descening order. The "last_departuretime" option will sort
+     *  results by the latest filed departuretime for that route in descending order (newest first). Any invalid
+     *  value will result in sorting by count descending.
+     *
+     * @param int $how_many
+     *  Maximum number of past flights to obtain. Must be a positive integer value less.
+     *
+     * @param int $offset
+     *  Must be an integer value of the offset row count you want the search to start at.
+     *
+     * @return RoutesBetweenAirports
+     */
     public function routes_between_airports(
         string $origin,
         string $destination,
         string $max_file_age,
-        string $sort_by,
+        string $sort_by = 'count',
         int $how_many = 15,
         int $offset = 0
-    )
-
-    public function airline_flight_schedules(
-        int $start_date,
-        int $end_date,
-        string $origin = '',
-        string $destination = '',
-        string $airline = '',
-        string $flightno = '',
-        bool $exclude_codeshare = false,
-        int $how_many = 15,
-        int $offset = 0
-    ) {
+    ): RoutesBetweenAirports {
         $params = [
-            'start_date'            => $start_date,
-            'end_date'              => $end_date,
-            'origin'                => $origin,
-            'destination'           => $destination,
-            'airline'               => $airline,
-            'flightno'              => $flightno,
-            'exclude_codeshare'     => $exclude_codeshare,
+            'origin'        => $origin,
+            'destination'   => $destination,
+            'max_file_age'  => $max_file_age,
+            'sort_by'       => $sort_by,
+            'howMany'       => $how_many,
+            'offset'        => $offset
+        ];
+
+        return $this->request(RoutesBetweenAirports::class, $params);
+    }
+
+    /**
+     * Returns information about the owner of an aircraft, given a flight number or N-number. Data returned includes
+     * owner's name, location (typically city and state), and website, if any. Codeshares and alternate idents are
+     * automatically searched.
+     *
+     * @param string $ident
+     *  Requested tail number.
+     *
+     * @return TailOwner
+     */
+    public function tail_owner(string $ident): TailOwner
+    {
+        $params = ['ident' => $ident];
+        return $this->request(TailOwner::class, $params);
+    }
+
+    /**
+     * Given an airport, return the Weather Conditions (METAR) as parsed, human-readable, and raw formats. To return
+     * weather for a nearby airport if the requested one is not available, then set the return_nearby_weather argument
+     * to true. If a value greater than 1 is specified for howMany then multiple past reports will be returned, in
+     * order of increasing age.
+     *
+     * @param string $airport_code
+     *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
+     *
+     * @param int $weather_date
+     *  The active time for the METAR reports (in seconds since 1970). If howMany is greater than 1 then this will
+     *  specify the first result while subsequent results will be retrieved in reverse chronological order. If
+     *  specified as zero, then the most recent report available is assumed.
+     *
+     * @param string $temperature_units
+     *  The units for temperature fields. May be C, F, Celsius or Fahrenheit.
+     *
+     * @param bool $return_nearby_weather
+     *  If true then if the requested airport does not have a weather conditions report then the weather for the
+     *  closest airport will be returned (if there is one within 30 miles)
+     *
+     * @param int $how_many
+     *  The maximum number of past records to obtain. Must be a positive integer value.
+     *
+     * @param int $offset
+     *  This must be an integer value of the offset row count you want the search to start at. Most requests should
+     *  be 0 (most recent report).
+     *
+     * @return WeatherConditions
+     */
+    public function weather_conditions(
+        string $airport_code,
+        int $weather_date = 0,
+        string $temperature_units = 'C',
+        bool $return_nearby_weather = false,
+        int $how_many = 15,
+        int $offset = 0
+    ): WeatherConditions {
+        $params = [
+            'airport_code'          => $airport_code,
+            'weather_date'          => $weather_date,
+            'temperature_units'     => $temperature_units,
+            'return_nearby_weather' => $return_nearby_weather,
             'howMany'               => $how_many,
             'offset'                => $offset
         ];
 
-        return $this->request(AirlineFlightSchedules::class, $params);
+        return $this->request(WeatherConditions::class, $params);
+    }
+
+    /**
+     * Returns the Weather Forecast (Terminal Area Forecast or TAF) for a given airport. If the weather_date parameters
+     * is omitted or set to 0 then the latest forecast is returned. To retrieve the active forecast for a specific
+     * time, pass in weather_date with the request.
+     *
+     * @param string $airport_code
+     *  The ICAO airport ID (e.g., KLAX, KSFO, KIAH, KHOU, KJFK, KEWR, KORD, KATL, etc.)
+     *
+     * @param int $weather_date
+     *  The effective weather date in Unix epoch for the results. If weather_date is omitted or set to 0 then the
+     *  latest forecast is returned. Use UTC/GMT timezone to convert to local timezone.
+     *
+     * @param bool $return_nearby_weather
+     *  If true then if the requested airport does not have a forecast then the forecast for the closest airport
+     *  will be returned (if there is one within 30 miles)
+     *
+     * @return WeatherForecast
+     */
+    public function weather_forecast(
+        string $airport_code,
+        int $weather_date = 0,
+        bool $return_nearby_weather = false
+    ): WeatherForecast {
+        $params = [
+            'airport_code'          => $airport_code,
+            'weather_date'          => $weather_date,
+            'return_nearby_weather' => $return_nearby_weather
+        ];
+
+        return $this->request(WeatherForecast::class, $params);
+    }
+
+    /**
+     * Returns information about a five-digit zipcode. Of particular importance is latitude and longitude.
+     *
+     * @param string $zipcode
+     *  A five-digit U.S. Postal Service zipcode.
+     *
+     * @return ZipcodeInfo
+     */
+    public function zipcode_info(string $zipcode): ZipcodeInfo
+    {
+        $params = ['zipcode' => $zipcode];
+        return $this->request(ZipcodeInfo::class, $params);
     }
 }
 
-
 $client = new FlightAware($username, $api_key);
-//$aircraft_type = $client->aircraft_type(['type' => 'GALX']);
-$data = $client->nearby_airports(30, null, null, 'KBHM');
+$data = $client->zipcode_info(35213);
 print_r($data->raw());
