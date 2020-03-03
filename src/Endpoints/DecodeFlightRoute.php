@@ -6,18 +6,20 @@ class DecodeFlightRoute
 {
     const API_ENDPOINT = 'DecodeFlightRoute';
 
-    public $airline_operation_data;
+    public $route_distance;
+    public $route;
 
     public function __construct($data)
     {
-        $data = json_decode($data, true);
-        print_r($data);
-        die();
-        $airline_list = $data['CountAllEnrouteAirlineOperationsResult']['data'];
+        $this->route = $data['DecodeFlightRouteResult']['route_distance'];
+        $this->route = $data['DecodeFlightRouteResult']['data'];
     }
 
     public function raw()
     {
-        return $this->airline_operation_data;
+        return [
+            'route_distance'    => $this->route_distance,
+            'route'             => $this->route
+        ];
     }
 }

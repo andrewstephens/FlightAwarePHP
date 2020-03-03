@@ -307,7 +307,6 @@ class FlightAware
      *  Unique identifier assigned by FlightAware for the desired flight (or use "ident@departureTime").
      *
      * @return DecodeFlightRoute
-     * TODO: FINISH THIS METHOD
      */
     public function decode_flight_route(string $faFlightID): DecodeFlightRoute
     {
@@ -331,13 +330,25 @@ class FlightAware
      *  Destination airport code
      *
      * @return DecodeRoute
-     *
-     * TODO: FINISH METHOD
      */
-    public function decode_route(string $origin, string $route, string $destination): DecodeRoute
+    public function decode_route(string $origin, string $route, string $destination)
     {
         $params = ['origin' => $origin, 'route' => $route, 'destination' => $destination];
         return $this->request(DecodeRoute::class, $params);
+    }
+
+    /**
+     * Converts a string of Origin/Waypoint/Destinations into a decoded route
+     * @param string $route
+     * @return DecodeRoute
+     */
+    public function decodeRouteString(string $route)
+    {
+        $route_pieces = explode(' ', $route);
+        $origin = array_shift($route_pieces);
+        $destination = array_pop($route_pieces);
+        $route = implode(' ', $route_pieces);
+        return $this->decode_route($origin, $route, $destination);
     }
 
     /**
