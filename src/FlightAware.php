@@ -34,6 +34,7 @@ require '../vendor/autoload.php';
 class FlightAware
 {
     const BASE_URL = 'http://flightxml.flightaware.com/json/FlightXML3/';
+    const TEST_THING = 'doing the thing!';
 
     /**
      * FlightAware constructor.
@@ -432,8 +433,7 @@ class FlightAware
         string $type = 'all',
         int $how_many = 15,
         int $offset = 0
-    ): FleetBoards
-    {
+    ): FleetBoards {
         $params = [
             'fleet_code'        => $fleet_code,
             'include_ex_data'   => $include_ex_data,
