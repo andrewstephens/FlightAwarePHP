@@ -61,17 +61,6 @@ class FlightAware
     }
 
     /**
-     * Test Information Method
-     *
-     * @param string $info
-     * @return bool|int
-     */
-    public function information($info)
-    {
-        return mb_strpos($info, 'tasty');
-    }
-
-    /**
      * Request the data from a specific endpoint.
      *
      * @param $class_name
