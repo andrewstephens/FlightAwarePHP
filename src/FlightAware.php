@@ -61,14 +61,18 @@ class FlightAware
     }
 
     /**
-     * Test Information Method
+     * Building a string
      *
-     * @param string $info
-     * @return bool|int
+     * @param string $startingString
+     * @return string
      */
-    public function information($info)
+    public function buildAString($startingString = '')
     {
-        return mb_strpos($info, 'tasty');
+        $startingString .= 'Hello, ';
+        $startingString .= 'this is Patrick.';
+        $startingString .= ' That is it. The end.';
+
+        return $startingString;
     }
 
     /**
