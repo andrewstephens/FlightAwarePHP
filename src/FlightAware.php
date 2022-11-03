@@ -34,7 +34,6 @@ require '../vendor/autoload.php';
 class FlightAware
 {
     const BASE_URL = 'http://flightxml.flightaware.com/json/FlightXML3/';
-    const TEST_THING = 'doing the thing!';
 
     /**
      * FlightAware constructor.
@@ -59,6 +58,21 @@ class FlightAware
                 )
             ]
         ];
+    }
+
+    /**
+     * Building a string
+     *
+     * @param string $startingString
+     * @return string
+     */
+    public function buildAString($startingString = '')
+    {
+        $startingString .= 'Hello, ';
+        $startingString .= 'this is Patrick.';
+        $startingString .= ' That is it. The end.';
+
+        return $startingString;
     }
 
     /**
