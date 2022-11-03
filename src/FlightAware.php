@@ -61,21 +61,6 @@ class FlightAware
     }
 
     /**
-     * Building a string
-     *
-     * @param string $startingString
-     * @return string
-     */
-    public function buildAString($startingString = '')
-    {
-        $startingString .= 'Hello, ';
-        $startingString .= 'this is Patrick.';
-        $startingString .= ' That is it. The end.';
-
-        return $startingString;
-    }
-
-    /**
      * Request the data from a specific endpoint.
      *
      * @param $class_name
